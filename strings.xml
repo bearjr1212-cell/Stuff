@@ -107,4 +107,21 @@
     <string name="motoFastbootUnlockFRP1">Fastboot-Based FRP Unlock</string>
     <string name="fbbFRPu1tooltip">Attempts to FRP unlock a Motorola Phone via erasing partitions with fastboot</string>
     <string name="motoFastbootGuide">Steps to enable fastboot to prepare for FRP unlock on your Motorola phone:\n\n1. Power off the device, by holding the power button\n and pressing power off on the screen.\n\n2. Make sure your phone is unplugged for now,\n and the phone is fully powered off. \n\n3. Whilst holding down the volume down button, plug your phone into \nthis computer. Keep holding volume down until some sort of screen or text \nshows up which may say something like "Fastboot". Then, close this window to continue.</string>
+    <string name="brandMtp">MTP / Files</string>
+    <string name="mtpOpenFileManager">Open in File Manager 📂</string>
+    <string name="mtpOpenFileManagerInfo">Opens the connected device in your system\nfile manager using MTP.\n\nLinux: requires gvfs-mtp\n(sudo apt install gvfs-mtp)</string>
+    <string name="mtpBackupPhotos">Backup Photos 🖼️</string>
+    <string name="mtpBackupPhotosInfo">Copies the DCIM folder from your device\nto a folder on this computer via ADB.\n\nRequires USB Debugging to be enabled.</string>
+    <string name="mtpPullPath">Pull Custom Path 📥</string>
+    <string name="mtpPullPathInfo">Pull any file or folder from your device\nto this computer via ADB.\n\nRequires USB Debugging to be enabled.</string>
+    <string name="mtpStorageInfo">Storage Info 💾</string>
+    <string name="mtpStorageInfoInfo">Shows total, used, and available storage\non your device's internal storage (/sdcard).\n\nRequires USB Debugging to be enabled.</string>
+    <string name="samKnoxStatus">Knox Warranty Check 🔒</string>
+    <string name="samKnoxStatusInfo">Checks whether the Knox warranty bit\nhas been tripped on your Samsung device.\n\nA tripped Knox bit may disable Samsung Pay\nand other Knox-protected features.</string>
+    <string name="samSimLockStatus">SIM Lock Status 📶</string>
+    <string name="samSimLockStatusInfo">Checks whether your Samsung device\nis carrier/SIM locked or unlocked.</string>
+    <string name="samCscChange">Change CSC 🌍</string>
+    <string name="samCscChangeInfo">Changes the Country Sales Code (CSC)\nof your Samsung device.\n\nMay alter regional settings and\npreinstalled apps after a reboot.</string>
+    <string name="mtpConnectModem">Connect Modem 🔌</string>
+    <string name="mtpConnectModemInfo">Walks through connecting your Samsung device\nmodem via MTP mode step by step.\n\nAutomatically switches USB configuration on\nLinux and sends the modem unlock sequence.\n\nLinux: requires pyusb (pip install pyusb)</string>
 </resources>

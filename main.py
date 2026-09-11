@@ -421,15 +421,17 @@ class SerialManager: # AT command sender via class
 
     @staticmethod
     def _activate_samsung_modem_config():
-        """Expose Samsung's secondary CDC ACM configuration on Linux."""
+        """Expose Samsung's secondary CDC ACM configuration on Linux.
+        Returns True if the modem configuration was activated, False otherwise."""
         try:
             import usb.core
         except ImportError:
-            return
+            print("  [pyusb not installed — run: pip install pyusb]", end="")
+            return False
 
         device = usb.core.find(idVendor=0x04E8, idProduct=0x6860)
         if device is None:
-            return
+            return False
 
         # Linux desktops commonly auto-mount Samsung's MTP interface. Release it
         # before changing configurations, otherwise libusb returns BUSY (-6).
@@ -462,10 +464,11 @@ class SerialManager: # AT command sender via class
                     time.sleep(1)
                     continue
                 device.set_configuration(2)
-                return
+                return True
             except usb.core.USBError:
                 time.sleep(1)
                 device = usb.core.find(idVendor=0x04E8, idProduct=0x6860)
+        return False
 
     def send(self, command):
         if not self.ser or not self.ser.is_open:
@@ -1742,8 +1745,20 @@ def success_checks(uuid, model, action, status, first=True):
 # =============================================
 
 def MTPmenu():
+    # Skip the instruction dialog if the modem serial port is already open
+    if serman.ser and serman.ser.is_open:
+        return
+    # On Linux, try to activate the Samsung modem USB configuration automatically
+    # before prompting the user. serman.reset() calls detect_port() which internally
+    # calls _activate_samsung_modem_config() and waits for the port to appear.
+    if os_config == "LINUX":
+        try:
+            serman.reset()
+            if serman.ser and serman.ser.is_open:
+                return
+        except Exception:
+            pass
     show_messagebox_at(500, 200, "nPhoneKIT", strings['mtpMenu'])
-    # Show user instructions to enable MTP mode
 
 def adbMenu():
     ADB.send("devices")
@@ -1936,27 +1951,37 @@ def contribution_prompt(x, y):  # Nicely formatted contribution/support message 
 def modemUnlock(manufacturer, softUnlock=False): # Unlock the modem per-action if preload wasn't enabled
     global firstunlock
 
+    def _send_unlock(not_first=False):
+        if manufacturer == "SAMSUNG":
+            AT.send("AT+SWATD=0", not_first)
+            if not softUnlock:
+                AT.send("AT+ACTIVATE=0,0,0")
+
     if os_config == "LINUX":
         if not enable_preload:
             if preload_error and firstunlock == False:
-                if manufacturer == "SAMSUNG": # Select the manufacturer to preload
-                    AT.send("AT+SWATD=0", True) # Disables some sort of a proprietary "AT commands lock" from SAMSUNG
-                    AT.send("AT+ACTIVATE=0,0,0", True) # An activation sequence that unlocks the modem when paired with the above command.
-                    firstunlock = True
+                _send_unlock(not_first=True)
+                firstunlock = True
             else:
-                if manufacturer == "SAMSUNG": # Select the manufacturer to preload
-                    if softUnlock:
-                        AT.send("AT+SWATD=0") # Disables some sort of a proprietary "AT commands lock" from SAMSUNG
-                    else:
-                        AT.send("AT+SWATD=0") # Disables some sort of a proprietary "AT commands lock" from SAMSUNG
-                        AT.send("AT+ACTIVATE=0,0,0") # An activation sequence that unlocks the modem when paired with the above command.
+                _send_unlock()
+        # If modem still not open after first unlock attempt, try once more via port re-detection
+        if not (serman.ser and serman.ser.is_open):
+            try:
+                serman.reset()
+                _send_unlock()
+            except Exception:
+                pass
     elif os_config in ("WINDOWS", "MACOS"): # macOS behaves like Windows here; without this branch the modem is never unlocked on Mac and AT+DEVCONINFO flakes out
-        if manufacturer == "SAMSUNG": # Select the manufacturer to preload
-            if softUnlock:
-                AT.send("AT+SWATD=0") # Disables some sort of a proprietary "AT commands lock" from SAMSUNG
-            else:
-                AT.send("AT+SWATD=0") # Disables some sort of a proprietary "AT commands lock" from SAMSUNG
-                AT.send("AT+ACTIVATE=0,0,0") # An activation sequence that unlocks the modem when paired with the above command.
+        _send_unlock()
+        # Retry once on failure
+        if not (serman.ser and serman.ser.is_open):
+            try:
+                serman.reset()
+                _send_unlock()
+            except Exception:
+                pass
+
+    return bool(serman.ser and serman.ser.is_open)
 
 # Function that can parse DEVCONINFO in order to make it more readable
 def parse_devconinfo(raw_input): 
@@ -2606,6 +2631,302 @@ def reboot_download_sam(): # Reboot Samsung device to download mode
         tthread = threading.Thread(target = success_checks, args = (get_public_hardware_uuid(), model, "REBOOT_DOWNLOAD_SAM", "Fail"))
         tthread.start() # Sends basic, anonymized success_checks info with only the model number.
     print(" OK")
+
+def sam_knox_status():
+    print("Checking Knox warranty status...", end="")
+    MTPmenu()
+    modemUnlock("SAMSUNG", True)
+    rt()
+    AT.send("AT+KSTRINGB=0,3")
+    output = readOutput("AT")
+    info = verinfo(False, False)
+    model = re.search(r'Model:\s*(\S+)', info)
+
+    if "+KSTRINGB:" in output:
+        match = re.search(r'\+KSTRINGB:\s*([0-9A-Fa-f]+)', output)
+        knox_val = match.group(1).strip() if match else "Unknown"
+        tripped = any(c != '0' for c in knox_val.replace("0x", "").replace("0X", ""))
+        status = "TRIPPED ❌" if tripped else "INTACT ✅"
+        detail = (
+            f"Knox Warranty: {status}\nKnox String: {knox_val}\n\n"
+            + ("Your Knox warranty has been tripped. Samsung Pay and Knox-protected features may be disabled."
+               if tripped else "Your Knox warranty is intact. No unauthorized modifications detected.")
+        )
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT", detail)
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "KNOX_STATUS", "Success"))
+        tthread.start()
+    else:
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Could not read Knox warranty status.\nMake sure your Samsung device is connected in MTP mode.")
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "KNOX_STATUS", "Fail"))
+        tthread.start()
+
+
+def sam_sim_lock_status():
+    print("Checking SIM/network lock status...", end="")
+    MTPmenu()
+    info = verinfo(False)
+    model = re.search(r'Model:\s*(\S+)', info)
+
+    lock_match = re.search(r'SIM Lock:\s*(.+)', info)
+    if lock_match:
+        lock_val = lock_match.group(1).strip()
+        if lock_val in ("0", "N/A", ""):
+            status_msg = "SIM Lock: UNLOCKED ✅\n\nThis device is not carrier locked and can use any SIM card."
+        else:
+            status_msg = f"SIM Lock: LOCKED \U0001f512\nLock code: {lock_val}\n\nThis device is carrier locked."
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT", status_msg)
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "SIM_LOCK_STATUS", "Success"))
+        tthread.start()
+    else:
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Could not determine SIM lock status.\nMake sure your Samsung device is connected in MTP mode.")
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "SIM_LOCK_STATUS", "Fail"))
+        tthread.start()
+
+
+def sam_csc_change():
+    csc = tkinput(
+        title="nPhoneKIT",
+        text="Enter target CSC code (e.g. VZW, ATT, TMB, XAA, OXM):",
+        placeholder="XAA",
+        ok_text="Change CSC",
+        cancel_text="Cancel"
+    )
+    if not csc:
+        return
+    csc = csc.upper().strip()
+    if not re.match(r'^[A-Z]{3,5}$', csc):
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Invalid CSC format.\nCSC codes are 3–5 uppercase letters (e.g. XAA, VZW, ATT).")
+        return
+
+    print(f"Changing CSC to {csc}...", end="")
+    MTPmenu()
+    modemUnlock("SAMSUNG", True)
+    rt()
+    AT.send(f"AT+PRECONFG=2,{csc}")
+    time.sleep(0.5)
+    AT.send("AT+PRECONFG=1,0")
+    output = readOutput("AT")
+    info = verinfo(False, False)
+    model = re.search(r'Model:\s*(\S+)', info)
+
+    if "error" not in output.lower():
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            f"CSC change to '{csc}' sent successfully.\n\n"
+            "Reboot your device to apply changes.\n\n"
+            "Note: Changing the CSC may alter preinstalled apps and regional settings.")
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "CSC_CHANGE", "Success"))
+        tthread.start()
+    else:
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            f"Failed to change CSC to '{csc}'.\nYour device may not support this AT command.")
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "CSC_CHANGE", "Fail"))
+        tthread.start()
+
+
+def _adb_pull_direct(src, dest, timeout=120):
+    adb_path = ADB.path()
+    if adb_path is None:
+        return False, "ADB not found"
+    if os_config == "LINUX":
+        argv = ["sudo", adb_path, "pull", src, dest]
+    else:
+        argv = [adb_path, "pull", src, dest]
+    try:
+        result = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+        return result.returncode == 0, result.stdout + result.stderr
+    except subprocess.TimeoutExpired:
+        return False, "ADB pull timed out"
+    except Exception as e:
+        return False, str(e)
+
+
+def mtp_open_file_manager():
+    MTPmenu()
+    print("Opening device in file manager...", end="")
+    try:
+        if os_config == "LINUX":
+            result = subprocess.run(["xdg-open", "mtp://"], capture_output=True, timeout=5)
+            if result.returncode != 0:
+                subprocess.run(["gio", "open", "mtp://"], capture_output=True, timeout=5)
+        elif os_config == "WINDOWS":
+            os.startfile("shell:MyComputerFolder")
+        elif os_config == "MACOS":
+            subprocess.run(["open", "/Volumes"], timeout=5)
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Your device should now be visible in the file manager.\n\n"
+            "If it does not appear on Linux, try:\n  sudo apt install gvfs-mtp")
+    except Exception as e:
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT", f"Could not open file manager: {e}")
+
+
+def mtp_backup_photos():
+    MTPmenu()
+    dest = tkinput(
+        title="nPhoneKIT",
+        text="Destination folder on this computer:",
+        placeholder=os.path.join(os.path.expanduser("~"), "PhoneBackup"),
+        ok_text="Backup",
+        cancel_text="Cancel"
+    )
+    if not dest:
+        return
+    os.makedirs(dest, exist_ok=True)
+    print(f"Backing up photos to {dest}...", end="")
+    adbMenu()
+    ok, output = _adb_pull_direct("/sdcard/DCIM", dest)
+    if ok:
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            f"Photos backed up successfully!\n\nDestination:\n{dest}")
+    else:
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            f"Photo backup failed.\n\n{output[:300]}\n\n"
+            "Make sure USB Debugging is enabled and authorized on the device.")
+
+
+def mtp_pull_path():
+    MTPmenu()
+    src = tkinput(
+        title="nPhoneKIT",
+        text="Path on device to pull (e.g. /sdcard/Documents):",
+        placeholder="/sdcard/",
+        ok_text="Next",
+        cancel_text="Cancel"
+    )
+    if not src:
+        return
+    dest = tkinput(
+        title="nPhoneKIT",
+        text="Destination folder on this computer:",
+        placeholder=os.path.join(os.path.expanduser("~"), "PhonePull"),
+        ok_text="Pull",
+        cancel_text="Cancel"
+    )
+    if not dest:
+        return
+    os.makedirs(dest, exist_ok=True)
+    print(f"Pulling {src}...", end="")
+    adbMenu()
+    ok, output = _adb_pull_direct(src, dest)
+    if ok:
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT", f"Pull complete!\n\nSaved to:\n{dest}")
+    else:
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            f"Pull failed.\n\n{output[:300]}\n\n"
+            "Make sure USB Debugging is enabled and the path exists on the device.")
+
+
+def mtp_storage_info():
+    print("Getting storage info...", end="")
+    adbMenu()
+    ADB.send("shell df -h /sdcard")
+    output = readOutput("ADB")
+    if not output or "error" in output.lower() or "unauthorized" in output.lower():
+        print(strings['failText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Could not get storage info.\nMake sure USB Debugging is enabled.")
+        return
+    print(strings['okText'])
+    lines = [l for l in output.strip().splitlines() if l.strip()]
+    if len(lines) >= 2:
+        parts = lines[1].split()
+        if len(parts) >= 4:
+            show_messagebox_at(500, 200, "nPhoneKIT",
+                f"Storage Info (/sdcard)\n\n"
+                f"Total:     {parts[1]}\n"
+                f"Used:      {parts[2]}\n"
+                f"Available: {parts[3]}")
+            return
+    show_messagebox_at(500, 200, "nPhoneKIT", f"Storage Info:\n\n{output}")
+
+
+def mtp_connect_modem():
+    """Interactive step-by-step Samsung MTP → modem connection walkthrough."""
+    # Step 1: check if already connected
+    print("Checking modem connection...", end="")
+    if serman.ser and serman.ser.is_open:
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Samsung modem is already accessible!\n\n"
+            "You can use AT command features directly.\n"
+            "No further steps are needed.")
+        return
+
+    print(" not connected")
+
+    # Step 2: on Linux, attempt automatic USB configuration switch
+    usb_switch_ok = False
+    if os_config == "LINUX":
+        print("Switching Samsung USB configuration...", end="")
+        usb_switch_ok = SerialManager._activate_samsung_modem_config()
+        if usb_switch_ok:
+            print(strings['okText'])
+            try:
+                serman.reset()
+            except Exception:
+                pass
+        else:
+            print(strings['failText'])
+
+    # Step 3: if still not connected, prompt user to enable MTP mode
+    if not (serman.ser and serman.ser.is_open):
+        show_messagebox_at(500, 200, "nPhoneKIT", strings['mtpMenu'])
+        time.sleep(1)
+        try:
+            serman.reset()
+        except Exception:
+            pass
+
+    # Step 4: send modem unlock commands
+    print("Sending modem unlock commands...", end="")
+    rt()
+    AT.send("AT+SWATD=0")
+    time.sleep(0.5)
+    AT.send("AT+ACTIVATE=0,0,0")
+    output = readOutput("AT")
+
+    info = verinfo(False, False)
+    model_match = re.search(r'Model:\s*(\S+)', info)
+    model = model_match.group(1) if model_match else "SAMSUNG"
+
+    connected = bool(serman.ser and serman.ser.is_open)
+
+    if connected:
+        print(strings['okText'])
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Modem connection successful!\n\n"
+            "Your Samsung device's modem is now accessible.\n"
+            "AT command features are ready to use.")
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "MTP_MODEM_CONNECT", "Success"))
+        tthread.start()
+    else:
+        print(strings['failText'])
+        hint = (
+            "• Device is plugged in via USB\n"
+            "• MTP mode is selected on the device screen\n"
+            "• Linux: pyusb is installed (pip install pyusb)\n"
+            "• Linux: you have permission to access /dev/ttyACM*"
+        )
+        show_messagebox_at(500, 200, "nPhoneKIT",
+            "Could not connect to Samsung modem.\n\n"
+            "Please check:\n" + hint)
+        tthread = threading.Thread(target=success_checks, args=(get_public_hardware_uuid(), model, "MTP_MODEM_CONNECT", "Fail"))
+        tthread.start()
+
 
 def imeicheck():
     info = verinfo(False)
@@ -3449,6 +3770,9 @@ class MainWindow(QtWidgets.QMainWindow):
             (strings.get('samWifitest','WIFITEST 🔧'), strings.get('samWifitestInfo',''), wifitest),
             (strings.get('samImeiCheck','IMEI Check 🔍'), strings.get('samImeiCheckInfo',''), imeicheck),
             (strings.get('samRemoveBloat','Remove Bloat 🧹'), strings.get('samRemoveBloatInfo',''), bloatRemove),
+            (strings.get('samKnoxStatus', 'Knox Warranty Check 🔒'), strings.get('samKnoxStatusInfo', ''), sam_knox_status),
+            (strings.get('samSimLockStatus', 'SIM Lock Status 📶'), strings.get('samSimLockStatusInfo', ''), sam_sim_lock_status),
+            (strings.get('samCscChange', 'Change CSC 🌍'), strings.get('samCscChangeInfo', ''), sam_csc_change),
         ]
         lg_actions = [
             (strings.get('lgScreenUnlockLabel','LG Screen Unlock 🔓'), strings.get('lgScreenUnlockTooltip',''), LG_screen_unlock),
@@ -3466,6 +3790,13 @@ class MainWindow(QtWidgets.QMainWindow):
             (strings.get('fbp','Set Fake Battery %'), strings.get('fbpInfo',''), setFakeBatteryPercent),
             (strings.get('rbp','Reset Fake Battery %'), strings.get('rbpInfo',''), resetBatteryPercent),
         ]
+        mtp_actions = [
+            (strings.get('mtpConnectModem', 'Connect Modem 🔌'), strings.get('mtpConnectModemInfo', ''), mtp_connect_modem),
+            (strings.get('mtpOpenFileManager', 'Open in File Manager 📂'), strings.get('mtpOpenFileManagerInfo', ''), mtp_open_file_manager),
+            (strings.get('mtpBackupPhotos', 'Backup Photos 🖼️'), strings.get('mtpBackupPhotosInfo', ''), mtp_backup_photos),
+            (strings.get('mtpPullPath', 'Pull Custom Path 📥'), strings.get('mtpPullPathInfo', ''), mtp_pull_path),
+            (strings.get('mtpStorageInfo', 'Storage Info 💾'), strings.get('mtpStorageInfoInfo', ''), mtp_storage_info),
+        ]
         feedback_actions = [
             (strings.get('featureRequest','Feature Request'), strings.get('featureRequestInfo',''), featureRequest),
             (strings.get('bugReport','Bug Report'), strings.get('bugReportInfo',''), bugReport),
@@ -3478,6 +3809,7 @@ class MainWindow(QtWidgets.QMainWindow):
             (strings.get('brandMediatek','MediaTek'), mtk_actions),
             (strings.get('brandAndroid','Android'), android_actions),
             (strings.get('ADB', 'ADB'), adb_actions),
+            (strings.get('brandMtp', 'MTP / Files'), mtp_actions),
             (strings.get('feedback', 'Feedback'), feedback_actions),
         ]
         self.tabs.clear()
