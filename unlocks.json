@@ -209,5 +209,117 @@
       "Not likely to work on more recent devices."
     ],
     "minutes": 10
+  },
+  {
+    "id": "force_adb_props",
+    "title": "Force ADB via System Props",
+    "desc": "Uses AT+DEBUGLVL to briefly open ADB, then races setprop commands to make ADB persistent across USB resets by writing persist.service.adb.enable and persist.sys.usb.config.",
+    "pros": [
+      "Makes ADB persist across device USB reconfigurations",
+      "Works on most Samsung devices with AT modem access",
+      "Broad OS version compatibility"
+    ],
+    "cons": [
+      "Requires ADB to be briefly available after AT commands",
+      "setprop may be blocked on locked-down firmware",
+      "Timing-sensitive on some devices"
+    ],
+    "minutes": 8
+  },
+  {
+    "id": "force_adb_usb_reconfig",
+    "title": "Force ADB via USB Reconfig",
+    "desc": "Rapidly cycles AT+USBSW configurations to force USB re-enumeration through an ADB-capable mode, then locks it in place with AT+DEBUGLVL before the device can switch back.",
+    "pros": [
+      "Works on devices where ADB opens only briefly",
+      "Fast method — under 5 minutes",
+      "Does not rely on timing-sensitive ADB races"
+    ],
+    "cons": [
+      "Requires AT+USBSW and AT+DEBUGLVL support",
+      "Not guaranteed on all Samsung firmware",
+      "Requires a fast USB connection"
+    ],
+    "minutes": 5
+  },
+  {
+    "id": "force_adb_tcpip",
+    "title": "Force ADB via TCP/IP Mode",
+    "desc": "Enables ADB via AT commands then immediately switches it to TCP/IP mode on port 5555, allowing ADB commands to continue wirelessly even after USB configuration resets.",
+    "pros": [
+      "ADB survives USB resets — works wirelessly over Wi-Fi",
+      "Useful when USB ADB keeps dropping",
+      "Port 5555 stays open after device restarts"
+    ],
+    "cons": [
+      "Device and PC must be on the same Wi-Fi network",
+      "Requires a working AT modem connection first",
+      "Wi-Fi ADB may be slower than USB"
+    ],
+    "minutes": 7
+  },
+  {
+    "id": "force_adb_debuglvl",
+    "title": "Force ADB via Debug Level 4",
+    "desc": "Sends AT+DEBUGLVL=0,4 twice to latch persistent ADB enable on Samsung devices, combined with AT+TESTMODE=0,255 for additional test-mode access. Broad Samsung compatibility.",
+    "pros": [
+      "AT+DEBUGLVL is widely supported across Samsung firmware",
+      "Sending twice increases latch reliability",
+      "Works independently of patch level"
+    ],
+    "cons": [
+      "Debug level may reset on device reboot",
+      "AT+TESTMODE trips Knox on some devices",
+      "Not confirmed on all 2025 firmware variants"
+    ],
+    "minutes": 8
+  },
+  {
+    "id": "exynos_debuglvc_frp",
+    "title": "Exynos Debug Level FRP Unlock",
+    "desc": "Uses AT+DEBUGLVC=0,5 to activate elevated modem debug level on Exynos devices, opening unrestricted ADB to bypass FRP.",
+    "pros": [
+      "Exynos-specific — more reliable than generic overload on international models",
+      "No CSC change required",
+      "Works on 2022-2025 Exynos firmware"
+    ],
+    "cons": [
+      "Exynos devices only (international variants ending in B/N)",
+      "Requires working AT modem connection",
+      "Not confirmed on all Exynos firmware versions"
+    ],
+    "minutes": 10
+  },
+  {
+    "id": "exynos_dumpctrl_frp",
+    "title": "Exynos DUMPCTRL ADB FRP Unlock",
+    "desc": "Triggers Exynos modem checkpoint mode via AT+DUMPCTRL=1,0 and AT+KSTRINGB=0,3, causing USB re-enumeration with ADB enabled before FRP can re-assert.",
+    "pros": [
+      "Works where standard overload fails on Exynos",
+      "Uses proven Exynos checkpoint command set",
+      "Compatible with most Exynos 2021-2025 firmware"
+    ],
+    "cons": [
+      "Exynos devices only",
+      "Timing-sensitive — PC speed affects success rate",
+      "Not confirmed on all Exynos models"
+    ],
+    "minutes": 12
+  },
+  {
+    "id": "exynos_efempty_bypass",
+    "title": "Exynos Factory Empty FRP Bypass",
+    "desc": "Sends AT+EFEMPTY=0 to directly clear the FRP partition flag on Exynos devices without requiring ADB. Reinitializes the modem after clearing.",
+    "pros": [
+      "No ADB required — pure AT command approach",
+      "Fast method (~5 min)",
+      "Direct FRP partition clear"
+    ],
+    "cons": [
+      "Exynos devices only",
+      "May clear additional factory calibration data",
+      "Device must respond to AT+EFEMPTY commands"
+    ],
+    "minutes": 5
   }
 ]

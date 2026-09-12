@@ -141,4 +141,18 @@
     <string name="samOmcReset">OMC Carrier Config Reset 🌐</string>
     <string name="samOmcResetInfo">Resets the carrier configuration by changing\nthe OMC code via AT commands.\n\nBest used alongside a standard FRP unlock.\nNon-destructive to user data. ~5 minutes.</string>
     <string name="samOemUnlockAtSteps">Connect your Samsung device in MTP mode.\n\nThis method will:\n1. Send AT debug and test-mode commands\n2. Attempt to set the OEM unlock flag\n3. Wait for ADB authorization\n4. Apply settings via ADB\n\nPress OK when ready.</string>
+    <string name="exynDebugLvc">Exynos Debug Level FRP 🔬</string>
+    <string name="exynDebugLvcInfo">Uses AT+DEBUGLVC=0,5 to activate an elevated\ndebug mode on Exynos modems, opening\nunrestricted ADB to bypass FRP.\n\nExynos devices only (international variants).\n~10 minutes.</string>
+    <string name="exynDumpctrl">Exynos DUMPCTRL FRP 🧠</string>
+    <string name="exynDumpctrlInfo">Triggers Exynos modem checkpoint mode via\nAT+DUMPCTRL+KSTRINGB, re-enumerating USB\nwith ADB enabled before FRP can re-assert.\n\nExynos devices only. ~12 minutes.</string>
+    <string name="exynEfempty">Exynos Factory Empty FRP 🏭</string>
+    <string name="exynEfemptyInfo">Sends AT+EFEMPTY=0 to clear the FRP partition\nflag directly on Exynos — no ADB required.\n\nExynos devices only. ~5 minutes.</string>
+    <string name="forceAdbProps">Force ADB via Props 📦</string>
+    <string name="forceAdbPropsInfo">Uses AT+DEBUGLVL to briefly enable ADB, then\nraces setprop commands to make it persistent.\n\nWorks on Samsung devices where ADB flashes\nopen briefly after modem unlock. ~8 minutes.</string>
+    <string name="forceAdbUsbReconfig">Force ADB USB Reconfig 🔌</string>
+    <string name="forceAdbUsbReconfigInfo">Rapidly cycles AT+USBSW configurations to\nforce USB re-enumeration through ADB mode,\nthen locks it with AT+DEBUGLVL.\n\nGood for devices that close ADB quickly. ~5 min.</string>
+    <string name="forceAdbTcpip">Force ADB TCP/IP 🌐</string>
+    <string name="forceAdbTcpipInfo">Enables ADB then immediately switches it to\nTCP/IP mode (port 5555) — survives USB config\nresets and allows wireless ADB commands.\n\n~7 minutes.</string>
+    <string name="forceAdbDebugLvl">Force ADB Debug Level 🔧</string>
+    <string name="forceAdbDebugLvlInfo">Sends AT+DEBUGLVL=0,4 twice to latch\npersistent ADB enable, plus AT+TESTMODE=0,255\nfor additional access on Samsung devices.\n\nBroad compatibility. ~8 minutes.</string>
 </resources>
