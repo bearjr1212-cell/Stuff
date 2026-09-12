@@ -34,7 +34,7 @@
     "title": "2022-2023 FRP Unlock",
     "desc": "Attempts to use AT in order to overload and trick the system into enabling ADB, and then using that to unlock the device.",
     "pros": [
-      "Works on most devices still 2022-2023 patch",
+      "Works on most devices still on the 2022-2023 patch",
       "Similar functionality to older methods"
     ],
     "cons": [
@@ -45,15 +45,15 @@
   {
     "id": "sam_pre_2022",
     "title": "Pre-2022 FRP Unlock",
-    "desc": "Attempts to use AT in order to easily enable ADB, and then using that to unlock the device.",
+    "desc": "Uses AT commands to directly enable ADB on the device, then uses ADB to complete the FRP bypass.",
     "pros": [
       "Works on most devices still pre-2022 patch",
-      "The OG unlock method used by tons of tools"
+      "Widely supported unlock method used by many tools"
     ],
     "cons": [
       "Doesn't work on anything past 2022-patch"
     ],
-    "minutes": 10
+    "minutes": 5
   },
   {
     "id": "sam_frpunlck_direct",
@@ -69,7 +69,7 @@
       "Not guaranteed on all firmware versions",
       "Device must accept AT+FRPUNLCK commands"
     ],
-    "minutes": 10
+    "minutes": 7
   },
   {
     "id": "sam_csc_frp_bypass",
@@ -165,7 +165,7 @@
       "Only confirmed on select Exynos models",
       "Requires quick reflexes to authorize ADB"
     ],
-    "minutes": 5
+    "minutes": 4
   },
   {
     "id": "sam_omccode_carrier_reset",
@@ -186,12 +186,12 @@
   {
     "id": "lg_unlock",
     "title": "LG Screen Unlock",
-    "desc": "Attempts to use AT in order to easily unlock the device.",
+    "desc": "Attempts to use AT commands to bypass the screen lock on LG devices. This is a screen unlock, not an FRP bypass.",
     "pros": [
       "Works on most devices still pre-G5"
     ],
     "cons": [
-      "Doesn't work on anything past-G5"
+      "Doesn't work on anything past G5"
     ],
     "minutes": 2
   },
@@ -206,9 +206,9 @@
     "cons": [
       "May not be easy for average users",
       "Can be hard to get into fastboot",
-      "Not likely to work on more recent devices."
+      "Not likely to work on more recent devices"
     ],
-    "minutes": 10
+    "minutes": 5
   },
   {
     "id": "force_adb_props",
@@ -240,7 +240,7 @@
       "Not guaranteed on all Samsung firmware",
       "Requires a fast USB connection"
     ],
-    "minutes": 5
+    "minutes": 4
   },
   {
     "id": "force_adb_tcpip",

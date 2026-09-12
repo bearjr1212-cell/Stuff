@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="welcomeText">Welcome to nPhoneKIT </string>
     <string name="settingsMenuTitleText">Preferences</string>
     <string name="devSettingsTitle">Developer Settings</string>
     <string name="applyText">Apply</string>
@@ -75,7 +74,7 @@
     <string name="frpUnlock2022info">Attempts to unlock a phone \nwhich has been FRP locked. \n\n Usually only works on older devices,\nspecifically from Security\n Patch Level August 𝟤𝟢𝟤𝟤 through\n the December 𝟤𝟢𝟤𝟤 patch.</string>
     <string name="frpUnlockPre2022">FRP Unlock \n(Security Patch \nPre-August-𝟤𝟢𝟤𝟤) 🔓</string>
     <string name="frpUnlockPre2022info">Attempts to unlock a phone \nwhich has been FRP locked. \n\n Usually only works on older devices,\nspecifically before Security\n Patch Level August 𝟤𝟢𝟤𝟤</string>
-    <string name="getVerInfo">Get Version Info 📝</string>
+    <string name="getVerInfoLabel">Get Version Info 📝</string>
     <string name="getVerInfoTooltip">Gets firmware version info from most SAMSUNG phones. \n\n(Works on S24 Series)</string>
     <string name="crashReboot">   Reboot 🔄   </string>
     <string name="crashRebootInfo">Crashes the phone using AT commands as an\nalternate reboot method.</string>
@@ -93,7 +92,6 @@
     <string name="mtkClientTooltip">Starts the MTKCLIENT GUI. This may take a few minutes\n if you're doing it for the first time.</string>
     <string name="nPhoneKITwelcome">Welcome to nPhoneKIT v{version}</string>
     <string name="newIn1.3.2">\nNew in v1.3.2: Bug fixes for FRP unlock and version info, improved language compatibility via a strings.xml. \n\nFull Changelog on https://github.com/nlckysolutions/nPhoneKIT/releases/tag/v1.3.2\n\n</string>
-    <string name="sudoReqdErrorOld">Please close this window and rerun using SUDO (or Run as Administrator on Windows). Most features/tools will not work otherwise.</string>
     <string name="sudoReqdError">Please close this window and rerun using Run as Administrator on Windows. This is so that nPhoneKIT can access serial ports.</string>
     <string name="feedback">Feedback</string>
     <string name="bugReport">Bug Report 🪲</string>
@@ -107,6 +105,10 @@
     <string name="motoFastbootUnlockFRP1">Fastboot-Based FRP Unlock</string>
     <string name="fbbFRPu1tooltip">Attempts to FRP unlock a Motorola Phone via erasing partitions with fastboot</string>
     <string name="motoFastbootGuide">Steps to enable fastboot to prepare for FRP unlock on your Motorola phone:\n\n1. Power off the device, by holding the power button\n and pressing power off on the screen.\n\n2. Make sure your phone is unplugged for now,\n and the phone is fully powered off. \n\n3. Whilst holding down the volume down button, plug your phone into \nthis computer. Keep holding volume down until some sort of screen or text \nshows up which may say something like "Fastboot". Then, close this window to continue.</string>
+    <string name="brandMoto">Motorola</string>
+    <string name="ADB">ADB</string>
+    <string name="frpUnlockAndroid1516">FRP Unlock Android 15/16 🔓</string>
+    <string name="frpUnlockAndroid1516Info">Uses bleeding-edge AT modem commands to attempt FRP unlock on Android 15/16 Samsung devices.\n\nMost other tools do not have this unlock.\nRequires MTP mode. ~15 minutes.</string>
     <string name="brandMtp">MTP / Files</string>
     <string name="mtpOpenFileManager">Open in File Manager 📂</string>
     <string name="mtpOpenFileManagerInfo">Opens the connected device in your system\nfile manager using MTP.\n\nLinux: requires gvfs-mtp\n(sudo apt install gvfs-mtp)</string>
