@@ -56,6 +56,134 @@
     "minutes": 10
   },
   {
+    "id": "sam_frpunlck_direct",
+    "title": "AT+FRPUNLCK Direct FRP Unlock",
+    "desc": "Sends the AT+FRPUNLCK command sequence directly to the modem to clear the FRP lock bit without relying on ADB overload tricks.",
+    "pros": [
+      "Faster than overload-based methods",
+      "Works on many 2023-2025 Samsung devices",
+      "Does not require a specific patch window"
+    ],
+    "cons": [
+      "Requires MTP mode and a working AT modem connection",
+      "Not guaranteed on all firmware versions",
+      "Device must accept AT+FRPUNLCK commands"
+    ],
+    "minutes": 10
+  },
+  {
+    "id": "sam_csc_frp_bypass",
+    "title": "CSC Rapid-Switch FRP Bypass",
+    "desc": "Rapidly cycles through CSC configurations via AT commands to confuse the FRP state machine, then uses ADB to complete the bypass.",
+    "pros": [
+      "Can work on devices resistant to overload methods",
+      "Compatible with most Samsung devices on 2022-2025 patches",
+      "Low risk of device damage"
+    ],
+    "cons": [
+      "May change regional settings temporarily",
+      "Requires restoring CSC after unlock",
+      "Not confirmed on all carrier-locked models"
+    ],
+    "minutes": 12
+  },
+  {
+    "id": "sam_oem_unlock_at",
+    "title": "AT OEM Unlock Enable",
+    "desc": "Uses AT debug-level and test-mode commands to set the OEM unlock flag on the device without needing to navigate Developer Options.",
+    "pros": [
+      "Unlocks OEM without enabling Developer Options first",
+      "Useful when the UI is completely locked behind FRP",
+      "Works independently of the security patch level"
+    ],
+    "cons": [
+      "Trips Knox warranty bit on most devices",
+      "Requires the device to respond to AT+DEBUGLVL commands",
+      "Results vary across device models"
+    ],
+    "minutes": 8
+  },
+  {
+    "id": "sam_2025_overload",
+    "title": "2025 Modem Overload FRP Unlock",
+    "desc": "Updated overload sequence targeting 2025 Samsung firmware. Sends an extended burst of AT commands that exploit a timing window in the modem firmware to force-enable ADB.",
+    "pros": [
+      "Targets devices on 2025 security patches",
+      "Extended command set increases success rate",
+      "Builds on proven 2022-2024 overload techniques"
+    ],
+    "cons": [
+      "Takes longer than older methods (~15 min)",
+      "Not confirmed on all 2025 firmware variants",
+      "Requires a fast USB connection"
+    ],
+    "minutes": 15
+  },
+  {
+    "id": "sam_factorst_frp",
+    "title": "AT+FACTORST Selective Reset",
+    "desc": "Uses the AT+FACTORST command to perform a selective factory reset that clears FRP partition data while minimizing data loss.",
+    "pros": [
+      "Directly targets FRP partition",
+      "Can work when other AT methods fail",
+      "Selective reset reduces full data wipe risk"
+    ],
+    "cons": [
+      "Some data may still be cleared",
+      "Device must be in MTP+modem mode",
+      "Not compatible with all Samsung firmware"
+    ],
+    "minutes": 8
+  },
+  {
+    "id": "sam_delock_sim",
+    "title": "AT+DELOCK Network/SIM Unlock",
+    "desc": "Attempts to carrier-unlock the device using AT+DELOCK commands sent directly through the modem. Works on Samsung devices locked to specific carriers.",
+    "pros": [
+      "Can remove carrier SIM lock permanently",
+      "No third-party unlock server required",
+      "Works on most Samsung modems"
+    ],
+    "cons": [
+      "Does not remove FRP — separate step needed",
+      "Success depends on carrier lock type",
+      "May not work on newer One UI devices"
+    ],
+    "minutes": 5
+  },
+  {
+    "id": "sam_usbsw_adb_race",
+    "title": "USBSW Mode-Switch ADB Race",
+    "desc": "Switches the Samsung device's USB interface mode via AT+USBSW commands to force an ADB re-enumeration, then races ADB commands in before FRP can re-assert.",
+    "pros": [
+      "Works on devices where standard overload fails",
+      "Fast method — under 5 minutes",
+      "Does not overload modem commands"
+    ],
+    "cons": [
+      "Timing-sensitive — success varies by PC speed",
+      "Only confirmed on select Exynos models",
+      "Requires quick reflexes to authorize ADB"
+    ],
+    "minutes": 5
+  },
+  {
+    "id": "sam_omccode_carrier_reset",
+    "title": "AT+OMCCODE Carrier Config Reset",
+    "desc": "Resets the carrier configuration on the device by changing the OMC code via AT commands, which can clear network-level FRP restrictions on carrier-locked devices.",
+    "pros": [
+      "Targets carrier-level FRP restrictions",
+      "Works alongside standard FRP unlocks",
+      "Non-destructive to user data"
+    ],
+    "cons": [
+      "Does not fully remove Google FRP alone",
+      "Best used as a supplementary step",
+      "May change carrier-specific features"
+    ],
+    "minutes": 5
+  },
+  {
     "id": "lg_unlock",
     "title": "LG Screen Unlock",
     "desc": "Attempts to use AT in order to easily unlock the device.",

@@ -124,4 +124,21 @@
     <string name="samCscChangeInfo">Changes the Country Sales Code (CSC)\nof your Samsung device.\n\nMay alter regional settings and\npreinstalled apps after a reboot.</string>
     <string name="mtpConnectModem">Connect Modem 🔌</string>
     <string name="mtpConnectModemInfo">Walks through connecting your Samsung device\nmodem via MTP mode step by step.\n\nAutomatically switches USB configuration on\nLinux and sends the modem unlock sequence.\n\nLinux: requires pyusb (pip install pyusb)</string>
+    <string name="frpUnlock2025">FRP Unlock 2025 🔓</string>
+    <string name="frpUnlock2025info">Extended modem overload sequence targeting\n2025 Samsung firmware timing windows.\n\nBuilds on 2022-2024 overload techniques with\nan updated command set and AT+FRPUNLCK finish.\n\nRequires MTP mode. ~15 minutes.</string>
+    <string name="frpUnlckDirect">AT+FRPUNLCK Direct 🎯</string>
+    <string name="frpUnlckDirectInfo">Sends AT+FRPUNLCK=1,0 directly to the modem\nto clear the FRP lock bit.\n\nFaster than overload methods. Works on many\n2023-2025 Samsung devices.\n\nRequires MTP mode. ~10 minutes.</string>
+    <string name="frpCscRapid">CSC Rapid-Switch FRP 🔄</string>
+    <string name="frpCscRapidInfo">Rapidly cycles through Samsung CSC codes\n(XAA → VZW → ATT → TMB → OXM) to confuse\nthe FRP state machine, then uses ADB to bypass.\n\nMay temporarily change regional settings.\nRequires MTP mode. ~12 minutes.</string>
+    <string name="frpFactorst">AT+FACTORST Reset FRP 🔁</string>
+    <string name="frpFactorstInfo">Uses AT+FACTORST=0,0 to perform a selective\nfactory reset that clears the FRP partition\nwhile minimizing data loss.\n\nRequires MTP mode. ~8 minutes.</string>
+    <string name="frpUsbswRace">USBSW Mode-Switch FRP ⚡</string>
+    <string name="frpUsbswRaceInfo">Switches Samsung USB interface mode via\nAT+USBSW to force ADB re-enumeration,\nthen races ADB commands before FRP re-asserts.\n\nFast method, ~5 minutes. Timing-sensitive.</string>
+    <string name="samOemUnlockAt">OEM Unlock via AT 🔐</string>
+    <string name="samOemUnlockAtInfo">Uses AT+DEBUGLVL and AT+TESTMODE commands\nto set the OEM unlock flag without needing\nto navigate Developer Options.\n\nNote: Trips Knox warranty bit.\nRequires MTP mode. ~8 minutes.</string>
+    <string name="samDelockSim">SIM/Carrier Delock 📡</string>
+    <string name="samDelockSimInfo">Attempts carrier/SIM unlock using AT+DELOCK\ncommands sent directly through the modem.\n\nWorks on Samsung devices locked to specific\ncarriers. Does not remove Google FRP alone.\n~5 minutes.</string>
+    <string name="samOmcReset">OMC Carrier Config Reset 🌐</string>
+    <string name="samOmcResetInfo">Resets the carrier configuration by changing\nthe OMC code via AT commands.\n\nBest used alongside a standard FRP unlock.\nNon-destructive to user data. ~5 minutes.</string>
+    <string name="samOemUnlockAtSteps">Connect your Samsung device in MTP mode.\n\nThis method will:\n1. Send AT debug and test-mode commands\n2. Attempt to set the OEM unlock flag\n3. Wait for ADB authorization\n4. Apply settings via ADB\n\nPress OK when ready.</string>
 </resources>
